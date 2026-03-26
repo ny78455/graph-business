@@ -1,0 +1,5 @@
+{"BillingDocument": "800001", "BillingDocumentItem": "10", "Product": "P001", "Quantity": 2, "Amount": 1000.00}
+{"BillingDocument": "800001", "BillingDocumentItem": "20", "Product": "P002", "Quantity": 1, "Amount": 200.50}
+{"BillingDocument": "800002", "BillingDocumentItem": "10", "Product": "P003", "Quantity": 5, "Amount": 500.00}
+{"BillingDocument": "800003", "BillingDocumentItem": "10", "Product": "P001", "Quantity": 1, "Amount": 500.00}
+{"BillingDocument": "800003", "BillingDocumentItem": "20", "Product": "P004", "Quantity": 1, "Amount": 250.25}

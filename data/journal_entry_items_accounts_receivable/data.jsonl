@@ -1,0 +1,2 @@
+{"JournalEntry": "JE001", "BillingDocument": "800001", "Amount": 1200.50, "IsPaid": true}
+{"JournalEntry": "JE002", "BillingDocument": "800002", "Amount": 500.00, "IsPaid": false}
