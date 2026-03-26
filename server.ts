@@ -83,7 +83,9 @@ function ingestData(force = false) {
             const data = JSON.parse(line);
             const values = columns.map(col => {
               const val = data[col];
+              if (val === null || val === undefined) return null;
               if (typeof val === 'boolean') return val ? 1 : 0;
+              if (typeof val === 'object') return JSON.stringify(val);
               return val;
             });
             insertStmt.run(...values);
