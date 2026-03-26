@@ -1,0 +1,5 @@
+{
+  "name": "Graph Business Explorer",
+  "description": "Graph-Based Business Context Explorer with LLM Query Interface",
+  "requestFramePermissions": []
+}
