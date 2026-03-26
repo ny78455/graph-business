@@ -7,17 +7,35 @@ import { createServer as createViteServer } from 'vite';
 
 const app = express();
 const PORT = 3000;
-const DB_PATH = './business_data.db';
+const DB_PATH = process.env.NODE_ENV === 'production' 
+  ? path.join(process.cwd(), 'business_data.db') 
+  : './business_data.db';
 const DATA_DIR = './data';
 
 app.use(cors());
 app.use(express.json());
 
 // Initialize Database
-const db = new Database(DB_PATH);
+let db: Database.Database;
+let isPrebuilt = false;
+
+try {
+  db = new Database(DB_PATH, { readonly: process.env.NODE_ENV === 'production' });
+  console.log(`Connected to database at ${DB_PATH}`);
+  isPrebuilt = true;
+} catch (e) {
+  console.error(`Failed to connect to database at ${DB_PATH}. Attempting to create in /tmp...`);
+  const tmpPath = path.join('/tmp', 'business_data.db');
+  db = new Database(tmpPath);
+  console.log(`Connected to database at ${tmpPath}`);
+}
 
 // Ingestion Logic
-function ingestData() {
+function ingestData(force = false) {
+  if (process.env.NODE_ENV === 'production' && !force) {
+    console.log('Skipping ingestion in production mode.');
+    return;
+  }
   console.log('Starting data ingestion...');
   const folders = fs.readdirSync(DATA_DIR);
   
@@ -81,23 +99,30 @@ function ingestData() {
 }
 
 // Initial Ingestion
-ingestData();
+if (process.env.NODE_ENV !== 'production') {
+  ingestData();
+} else if (!isPrebuilt) {
+  // If in production but DB was not prebuilt (e.g. on Vercel), ingest into /tmp
+  ingestData(true);
+}
 
 // Watch for changes in data directory
-let debounceTimer: NodeJS.Timeout | null = null;
-fs.watch(DATA_DIR, { recursive: true }, (eventType, filename) => {
-  if (filename && filename.endsWith('.jsonl')) {
-    console.log(`File change detected: ${filename}. Re-ingesting in 2s...`);
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      try {
-        ingestData();
-      } catch (e) {
-        console.error('Error during automatic re-ingestion:', e);
-      }
-    }, 2000);
-  }
-});
+if (process.env.NODE_ENV !== 'production') {
+  let debounceTimer: NodeJS.Timeout | null = null;
+  fs.watch(DATA_DIR, { recursive: true }, (eventType, filename) => {
+    if (filename && filename.endsWith('.jsonl')) {
+      console.log(`File change detected: ${filename}. Re-ingesting in 2s...`);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        try {
+          ingestData();
+        } catch (e) {
+          console.error('Error during automatic re-ingestion:', e);
+        }
+      }, 2000);
+    }
+  });
+}
 
 // API Endpoints
 
@@ -456,4 +481,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
